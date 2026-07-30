@@ -1,3 +1,23 @@
+############################################################
+# Construção do Índice de Complexidade Institucional
+#
+# Objetivo:
+# Estimar um indicador sintético de complexidade das escolas
+# rurais da Amazônia Legal utilizando Teoria de Resposta ao
+# Item (TRI).
+#
+# Dimensões consideradas:
+# - Infraestrutura escolar;
+# - Oferta de etapas educacionais;
+# - Porte da escola;
+# - Organização dos turnos.
+#
+# Método:
+# Modelo TRI ordinal utilizando pacote mirt.
+#
+# Resultado:
+# Índice contínuo de complexidade escolar.
+############################################################
 rm(list=ls())
 pacman::p_load(openxlsx,tidyr,dplyr,openxlsx,stats,
                data.table,PNADcIBGE,survey,ROCR,
