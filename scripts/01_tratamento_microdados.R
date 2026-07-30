@@ -1,22 +1,24 @@
 ############################################################
-# Pesquisa: Pedagogia da Alternância na Amazônia
+# Pesquisa:
+# Pedagogia da Alternância e Complexidade Institucional
+# das Escolas da Amazônia
 #
 # Objetivo:
-# Construir a base de escolas rurais da Amazônia Legal
+# Construir a base histórica das escolas da Amazônia Legal
 # utilizando os microdados do Censo Escolar/INEP (2013-2024).
 #
-# Etapas realizadas:
+# Etapas:
 # 1. Importação dos microdados anuais;
-# 2. Padronização das variáveis selecionadas;
-# 3. Identificação das escolas com oferta de formação
-#    por alternância;
-# 4. Construção do indicador de alternância persistente
-#    (presença em pelo menos três anos);
+# 2. Seleção das variáveis utilizadas na pesquisa;
+# 3. Construção da base histórica;
+# 4. Identificação da presença persistente da Pedagogia
+#    da Alternância;
 # 5. Criação da base final para análise.
 #
 # Fonte:
 # Microdados do Censo Escolar - INEP.
 ############################################################
+
 
 rm(list=ls())
 pacman::p_load(openxlsx,tidyr,dplyr,openxlsx,stats,
@@ -27,7 +29,9 @@ pacman::p_load(openxlsx,tidyr,dplyr,openxlsx,stats,
 options(encoding = "utf-8")
 setwd(dirname(getActiveDocumentContext()$path))
 
-
+#------------------------------------------------------------
+# 1. Importação dos microdados
+#------------------------------------------------------------
 educacao_13 <- fread("microdados_ed_basica_2013.csv")
 educacao_14 <- fread("microdados_ed_basica_2014.csv")
 educacao_15<- fread("microdados_ed_basica_2015.csv")
@@ -72,7 +76,9 @@ vars_faltantes <- c(
 
 educacao_23[, (vars_faltantes) := 0L]
 educacao_24[, (vars_faltantes) := 0L]
-
+#------------------------------------------------------------
+# 2. Seleção das variáveis utilizadas
+#------------------------------------------------------------
 #padronizar as variaveis
 vars_base <- c(
   "NU_ANO_CENSO",  "CO_ENTIDADE",  "IN_FORMACAO_ALTERNANCIA",
@@ -104,7 +110,9 @@ educacao_23 <- educacao_23 %>% select(any_of(vars_base))
 educacao_24 <- educacao_24 %>% select(any_of(vars_base))
 
 
-##juntar as bases :
+#------------------------------------------------------------
+# 3. Construção da base histórica
+#------------------------------------------------------------
 educacao_total <- dplyr::bind_rows(
   educacao_13, educacao_14, educacao_15, educacao_16,
   educacao_17, educacao_18, educacao_19, educacao_20,
@@ -115,7 +123,14 @@ View(educacao_total)
 #Defina explicitamente o período “válido” da alternância
 anos_validos_alternancia <- 2013:2021
 
-##vetor com os códigos da Amazônia Legal
+#------------------------------------------------------------
+# 4. Seleção territorial
+#
+# Estados pertencentes à Amazônia Legal:
+# AC, AP, AM, MA, MT, PA, RO, RR, TO
+#
+#------------------------------------------------------------
+
 ufs_amazonia_fronteira <- c(
   15, # Pará
   51, # Mato Grosso
@@ -124,40 +139,81 @@ ufs_amazonia_fronteira <- c(
   21  # Maranhão
 )
 
-##Filtrar a base já unificada (educacao_total)
-educacao_amazonia <- educacao_total %>%
-  filter(CO_UF %in% ufs_amazonia_fronteira)
+#------------------------------------------------------------
+# 5. Construção do indicador de alternância persistente
+#
+# Critério:
+# escola considerada com alternância quando apresentou
+# registro em pelo menos três anos entre 2013 e 2021.
+#
+#------------------------------------------------------------
 
-unique(educacao_amazonia$CO_UF)
 
-# Base histórica de alternância (somente anos válidos)
-alternancia_base <- educacao_amazonia %>%
-  filter(NU_ANO_CENSO %in% anos_validos_alternancia)
+anos_validos_alternancia <- 2013:2021
 
-# função moda
-moda <- function(x) {
-  ux <- unique(x)
-  ux[which.max(tabulate(match(x, ux)))]
-}
 
-# indicadores de alternância por escola
-alternancia_indicadores <- alternancia_base %>%
-  group_by(CO_ENTIDADE) %>%
+alternancia_indicadores <- educacao_amazonia %>%
+  filter(
+    NU_ANO_CENSO %in% anos_validos_alternancia
+  ) %>%
+  group_by(
+    CO_ENTIDADE
+  ) %>%
   summarise(
-    anos_obs = n_distinct(NU_ANO_CENSO),
-    anos_alternancia = sum(IN_FORMACAO_ALTERNANCIA == 1, na.rm = TRUE),
-    alternancia_3anos = as.integer(anos_alternancia >= 3),
-    moda_alternancia = moda(IN_FORMACAO_ALTERNANCIA),
+
+    anos_observados =
+      n_distinct(NU_ANO_CENSO),
+
+    anos_alternancia =
+      sum(
+        IN_FORMACAO_ALTERNANCIA == 1,
+        na.rm = TRUE
+      ),
+
+    alternancia_3anos =
+      as.integer(
+        anos_alternancia >= 3
+      ),
+
     .groups = "drop"
+
   )
 
-# juntar indicador na base completa
+
+
+#------------------------------------------------------------
+# 6. Incorporar indicador na base
+#------------------------------------------------------------
+
+
 educacao_amazonia <- educacao_amazonia %>%
-  left_join(alternancia_indicadores %>%
-              select(CO_ENTIDADE, alternancia_3anos),
-            by = "CO_ENTIDADE") %>%
-  mutate(alternancia_3anos = ifelse(is.na(alternancia_3anos), 0, alternancia_3anos))
 
-# salvar base final
-save(educacao_amazonia, file = "Educacao_Amazonia_Fronteira.RData")
+  left_join(
+    alternancia_indicadores %>%
+      select(
+        CO_ENTIDADE,
+        alternancia_3anos
+      ),
+    by = "CO_ENTIDADE"
+  ) %>%
 
+  mutate(
+    alternancia_3anos =
+      ifelse(
+        is.na(alternancia_3anos),
+        0,
+        alternancia_3anos
+      )
+  )
+
+
+
+#------------------------------------------------------------
+# 7. Salvar base final
+#------------------------------------------------------------
+
+
+save(
+  educacao_amazonia,
+  file = "Educacao_Amazonia_Fronteira.RData"
+)
