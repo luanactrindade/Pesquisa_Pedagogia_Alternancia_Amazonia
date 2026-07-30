@@ -417,6 +417,16 @@ labs(
 
 theme_minimal()
 
+#------------------------------------------------------------
+# 9 TABELA DOS MODELOS LOGÍSTICOS
+#------------------------------------------------------------
+
+modelo_resultados <- list(
+  Modelo 1 = modelo1,
+  Modelo 2 = modelo2
+)
+
+modelo_resultados
 
 
 #------------------------------------------------------------
