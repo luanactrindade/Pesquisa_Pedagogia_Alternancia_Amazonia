@@ -1,3 +1,27 @@
+############################################################
+# Modelos Estatísticos
+#
+# Objetivo:
+# Avaliar a associação entre complexidade institucional
+# e presença da Pedagogia da Alternância.
+#
+# Modelos estimados:
+#
+# Modelo 1:
+# Alternância ~ Complexidade escolar
+#
+# Modelo 2:
+# Alternância ~ Complexidade + Matrículas +
+#              Dependência administrativa + Estado
+#
+# Método:
+# Regressão logística binária.
+#
+# Resultado:
+# Estimativa das chances (odds ratio) de uma escola
+# apresentar alternância.
+############################################################
+
 rm(list=ls())
 pacman::p_load(openxlsx,tidyr,dplyr,openxlsx,stats,
                data.table,PNADcIBGE,survey,ROCR,
