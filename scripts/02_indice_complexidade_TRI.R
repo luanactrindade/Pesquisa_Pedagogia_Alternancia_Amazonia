@@ -1,23 +1,23 @@
 ############################################################
-# Construção do Índice de Complexidade Institucional
+# Pesquisa:
+# Pedagogia da Alternância e Complexidade Institucional
+# das Escolas da Amazônia
 #
 # Objetivo:
-# Estimar um indicador sintético de complexidade das escolas
-# rurais da Amazônia Legal utilizando Teoria de Resposta ao
-# Item (TRI).
+# Construir o Índice de Complexidade Institucional das
+# escolas rurais da Amazônia Legal por meio da Teoria
+# de Resposta ao Item (TRI).
 #
-# Dimensões consideradas:
-# - Infraestrutura escolar;
-# - Oferta de etapas educacionais;
-# - Porte da escola;
-# - Organização dos turnos.
+# Unidade de análise:
+# Escolas rurais no ano de 2023.
 #
 # Método:
 # Modelo TRI ordinal utilizando pacote mirt.
 #
 # Resultado:
-# Índice contínuo de complexidade escolar.
+# Índice contínuo de complexidade institucional.
 ############################################################
+
 rm(list=ls())
 pacman::p_load(openxlsx,tidyr,dplyr,openxlsx,stats,
                data.table,PNADcIBGE,survey,ROCR,
@@ -30,22 +30,23 @@ setwd(dirname(getActiveDocumentContext()$path))
 load("Educacao_Amazonia_Fronteira.RData")
 
 
-#-------------------------------------------------
-# 2. Fotografia estrutural (2023)
-#-------------------------------------------------
+
+#------------------------------------------------------------
+# 1. Seleção das escolas de 2023
+#------------------------------------------------------------
 
 educacao_estrutura_2023 <- educacao_amazonia %>%
   filter(NU_ANO_CENSO == 2023)
 
 #-------------------------------------------------
-# 3. Filtro: escolas rurais
+# 2. Filtro: escolas rurais
 #-------------------------------------------------
 
 educacao_estrutura_2023 <- educacao_estrutura_2023 %>%
   filter(TP_LOCALIZACAO == 2)
 
 #-------------------------------------------------
-# 4. Infraestrutura (água detalhada + síntese)
+# 3. Infraestrutura (água detalhada + síntese)
 #-------------------------------------------------
 
 educacao_estrutura_2023 <- educacao_estrutura_2023 %>%
@@ -71,7 +72,8 @@ educacao_estrutura_2023 <- educacao_estrutura_2023 %>%
     biblioteca= as.integer(IN_BIBLIOTECA == 1),
     cozinha   = as.integer(IN_COZINHA == 1)
   )
-# 4.1 Organização escolar (turnos)
+#-------------------------------------------------
+# 4 Organização escolar (turnos)
 #-------------------------------------------------
 
 educacao_estrutura_2023 <- educacao_estrutura_2023 %>%
@@ -135,7 +137,9 @@ educacao_estrutura_2023 <- educacao_estrutura_2023 %>%
 #-------------------------------------------------
 
 itens_tri <- educacao_estrutura_2023 %>%
+
   select(
+
     agua_tipo,
     energia,
     banheiro,
@@ -143,13 +147,11 @@ itens_tri <- educacao_estrutura_2023 %>%
     cozinha,
     porte_cat,
     etapa_mais_alta
+
   )
 
-# verificar NA
-colSums(is.na(itens_tri))
-
-# manter apenas casos completos
-dados_tri <- itens_tri %>% na.omit()
+dados_tri <- itens_tri %>%
+  na.omit()
 
 #-------------------------------------------------
 # 8. Modelo TRI
@@ -179,54 +181,21 @@ educacao_estrutura_2023 <- educacao_estrutura_2023 %>%
     nivel_complexidade = ntile(complexidade_escola, 6)
   )
 
-#-------------------------------------------------
-# 11. Modelo logístico
-#-------------------------------------------------
+#------------------------------------------------------------
+# 8. Salvar base com índice
+#------------------------------------------------------------
 
-modelo_logit <- glm(
-  alternancia_3anos ~ complexidade_escola,
-  data = educacao_estrutura_2023,
-  family = binomial
+
+save(
+  educacao_estrutura_2023,
+  modelo_tri,
+  file = "educacao_amazonia_TRI.RData"
 )
 
-summary(modelo_logit)
-
-#-------------------------------------------------
-# 12. Gráfico (probabilidade prevista)
-#-------------------------------------------------
-
-ggplot(educacao_estrutura_2023,
-       aes(x = complexidade_escola, y = alternancia_3anos)) +
-  geom_smooth(method = "glm",
-              method.args = list(family = "binomial"))
-
-#salvando
-save(educacao_estrutura_2023, file = "educacao_amazonia_TRI2.RData")
 
 
 
 
-
-#Peso relativo do TRI por dimensão
-coef_itens <- coef(modelo_tri, simplify = TRUE)$items
-
-pesos <- coef_itens[, "a1"]
-pesos_relativos <- pesos / sum(pesos)
-
-round(100 * pesos_relativos, 2)
-
-#quanto cada variável explica da complexidade
-coef_itens <- coef(modelo_tri, simplify = TRUE)$items
-
-coef_itens %>%
-  as.data.frame() %>%
-  mutate(
-    carga = a1 / sqrt(1 + a1^2),
-    R2 = carga^2
-  )
-
-
-plot(modelo_tri, type = "infotrace")
 
 
 
