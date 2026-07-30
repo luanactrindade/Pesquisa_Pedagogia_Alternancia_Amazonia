@@ -1,3 +1,23 @@
+############################################################
+# Pesquisa: Pedagogia da Alternância na Amazônia
+#
+# Objetivo:
+# Construir a base de escolas rurais da Amazônia Legal
+# utilizando os microdados do Censo Escolar/INEP (2013-2024).
+#
+# Etapas realizadas:
+# 1. Importação dos microdados anuais;
+# 2. Padronização das variáveis selecionadas;
+# 3. Identificação das escolas com oferta de formação
+#    por alternância;
+# 4. Construção do indicador de alternância persistente
+#    (presença em pelo menos três anos);
+# 5. Criação da base final para análise.
+#
+# Fonte:
+# Microdados do Censo Escolar - INEP.
+############################################################
+
 rm(list=ls())
 pacman::p_load(openxlsx,tidyr,dplyr,openxlsx,stats,
                data.table,PNADcIBGE,survey,ROCR,
